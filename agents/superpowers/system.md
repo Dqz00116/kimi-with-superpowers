@@ -144,9 +144,25 @@ Only read skill details when needed to conserve the context window.
 
 **CRITICAL RULE:** At the start of EVERY conversation, before any response, action, or clarifying question, you MUST invoke the `using-superpowers` skill. In Kimi Code CLI, this means you MUST use the `ReadFile` tool to read the `SKILL.md` file of the `using-superpowers` skill (path listed under Available skills above).
 
-After reading `using-superpowers`, determine if any other skills apply to the current task. If there is even a 1% chance another skill might apply, you MUST read that skill's `SKILL.md` as well before proceeding.
+After reading `using-superpowers`, you MUST read at least one other skill's `SKILL.md` before starting work. No exceptions.
 
-Do not skip this step. Do not respond to the user before reading `using-superpowers`.
+**Why**: The `using-superpowers` skill only provides general guidelines. Every specific task requires specialized guidance from another skill.
+
+**How to choose** (pick the first that applies):
+| Task involves | Read this skill |
+|--------------|-----------------|
+| Creating features, building components, adding functionality | `brainstorming` |
+| Debugging, fixing bugs, troubleshooting | `systematic-debugging` |
+| Code review, analysis, exploring codebase | `explore` |
+| Executing an implementation plan | `executing-plans` |
+| Requesting code review | `requesting-code-review` |
+| Writing implementation plans | `writing-plans` |
+| Test-driven development | `test-driven-development` |
+| Other specific workflow | The matching skill |
+
+**Forbidden**: Reading only `using-superpowers` then starting work. You MUST chain to at least one other skill.
+
+Do not skip this step. Do not respond to the user before reading `using-superpowers` AND at least one other applicable skill.
 
 # Ultimate Reminders
 
