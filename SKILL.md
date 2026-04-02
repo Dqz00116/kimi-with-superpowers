@@ -9,7 +9,7 @@ This skill guides you through installing the Superpowers workflow system for Kim
 
 ## ⚠️ Prerequisites - IMPORTANT
 
-**This installation requires the `feat/hook-inject-prompt` branch of Kimi Code CLI**, which adds support for the `inject_prompt` hook feature. This feature is essential for automatically injecting Superpowers reminders before every conversation.
+**This installation requires the `feat/hook-inject-prompt` branch of Kimi Code CLI**, which adds support for the `inject_prompt` hook feature.
 
 ### Step 0: Install Kimi CLI from feat/hook-inject-prompt Branch
 
@@ -35,27 +35,9 @@ cd "$env:USERPROFILE\kimi-cli"
 # Install dependencies and package
 uv sync
 uv pip install -e .
-
-# Add to PATH (optional - create wrapper scripts)
-New-Item -ItemType Directory -Force -Path "$env:USERPROFILE\Tools"
-
-@'
-@echo off
-"%USERPROFILE%\kimi-cli\.venv\Scripts\kimi.exe" %*
-'@ | Set-Content "$env:USERPROFILE\Tools\kimi.cmd"
-
-@'
-@echo off
-"%USERPROFILE%\kimi-cli\.venv\Scripts\kimi.exe" %*
-'@ | Set-Content "$env:USERPROFILE\Tools\kimi-cli.cmd"
-
-# Add to user PATH
-[Environment]::SetEnvironmentVariable("Path", $env:Path + ";" + "$env:USERPROFILE\Tools", "User")
 ```
 
 **Option B: Run Without Installing**
-
-If you prefer not to install, you can run directly from the source:
 
 ```bash
 cd ~/kimi-cli
@@ -63,8 +45,6 @@ uv run kimi --help
 ```
 
 ### Verify Hook Support
-
-After installation, verify that the `inject_prompt` feature is available:
 
 ```bash
 # Should show UserPromptSubmit in the list of supported events
@@ -76,8 +56,6 @@ kimi --help | grep -A 5 "hooks"
 ## Installation Steps
 
 ### Step 1: Clone Superpowers Repository
-
-Clone the superpowers repository to your local Kimi configuration directory:
 
 ```bash
 # Create .kimi directory if it doesn't exist
@@ -94,8 +72,6 @@ git clone --depth 1 https://github.com/obra/superpowers.git "$env:USERPROFILE\.k
 ```
 
 ### Step 2: Create Skill Links
-
-Superpowers skills need to be linked from `~/.kimi/superpowers/skills/` to `~/.kimi/skills/` so Kimi can discover them.
 
 **On macOS/Linux:**
 ```bash
@@ -133,8 +109,6 @@ foreach ($skill in $skills) {
 
 ### Step 3: Patch using-superpowers Skill for Kimi
 
-Kimi doesn't have a native `Skill` tool like Claude Code. We need to modify the `using-superpowers` skill to explain how to invoke skills via `ReadFile`.
-
 Edit `~/.kimi/superpowers/skills/using-superpowers/SKILL.md`:
 
 1. Change the description to:
@@ -152,9 +126,7 @@ Edit `~/.kimi/superpowers/skills/using-superpowers/SKILL.md`:
    **In Kimi Code CLI specifically:** Before responding to the user's first message in any conversation, you MUST use `ReadFile` to read `using-superpowers/SKILL.md` (from the skill paths listed in the system prompt). Then, if any other skill might apply, use `ReadFile` to read that skill's `SKILL.md` as well. Do not skip this step.
    ```
 
-### Step 4: Configure UserPromptSubmit Hook (NEW - REQUIRES feat/hook-inject-prompt BRANCH)
-
-This is the **key step** that enables automatic Superpowers invocation. The `inject_prompt` hook feature from the `feat/hook-inject-prompt` branch allows us to automatically inject a reminder before every conversation.
+### Step 4: Configure UserPromptSubmit Hook
 
 **Create the prompts directory and reminder file:**
 
@@ -171,6 +143,10 @@ Before responding to the user's message, you MUST invoke the Superpowers workflo
 1. Use ReadFile to read: ~/.kimi/skills/using-superpowers/SKILL.md
 2. Follow the instructions in that skill EXACTLY
 3. If any other skill might apply (even 1% chance), read that skill's SKILL.md as well
+4. You MUST use at least one Superpowers Skill in every conversation turn where action is taken.
+5. If no Superpowers Skill applies to the user's request, STOP and ask the user how to proceed. Do NOT perform any other action.
+6. You MUST select and invoke the appropriate skill BEFORE starting any other work.
+7. Do NOT run any tools in parallel before a skill has been selected and invoked.
 
 **Available Superpowers Skills:**
 - brainstorming - For open-ended exploration and idea generation
@@ -187,6 +163,11 @@ Before responding to the user's message, you MUST invoke the Superpowers workflo
 - verification-before-completion - For verifying work before finishing
 - writing-plans - For creating implementation plans
 - writing-skills - For creating new skills
+
+**Universal Workflow:**
+- If workflow/UNIVERSAL_WORKFLOW.md exists in the current project, read it first
+- Load PROJECT_CONFIG.yaml if present to adapt workflow to your stack
+- Follow the 7-stage Feature Development or 4-phase Debug process
 
 Do NOT skip this step. Do NOT respond before reading using-superpowers.
 EOF
@@ -205,6 +186,7 @@ Before responding to the user's message, you MUST invoke the Superpowers workflo
 1. Use ReadFile to read: ~/.kimi/skills/using-superpowers/SKILL.md
 2. Follow the instructions in that skill EXACTLY
 3. If any other skill might apply (even 1% chance), read that skill's SKILL.md as well
+4. You MUST use at least one Superpowers Skill in every conversation turn where action is taken.
 
 **Available Superpowers Skills:**
 - brainstorming - For open-ended exploration and idea generation
@@ -221,6 +203,11 @@ Before responding to the user's message, you MUST invoke the Superpowers workflo
 - verification-before-completion - For verifying work before finishing
 - writing-plans - For creating implementation plans
 - writing-skills - For creating new skills
+
+**Universal Workflow:**
+- If workflow/UNIVERSAL_WORKFLOW.md exists in the current project, read it first
+- Load PROJECT_CONFIG.yaml if present to adapt workflow to your stack
+- Follow the 7-stage Feature Development or 4-phase Debug process
 
 Do NOT skip this step. Do NOT respond before reading using-superpowers.
 "@
@@ -239,94 +226,23 @@ inject_prompt = "~/.kimi/prompts/superpowers-reminder.md"
 timeout = 5
 ```
 
-**Windows:** The path `~/.kimi/prompts/superpowers-reminder.md` will be automatically expanded to your user profile directory.
+---
 
-### Step 5: Create Custom Superpowers Agent (Optional)
+## Step 5: Install Universal Workflow (Optional but Recommended)
 
-If you want to use a custom agent configuration with additional Superpowers rules:
+If you want the universal workflow structure in your projects:
 
-**Create directory structure:**
 ```bash
-mkdir -p ~/.kimi/agents/superpowers
-```
+# Clone this repository
+git clone https://github.com/Dqz00116/kimi-with-superpowers.git
 
-**Create `~/.kimi/agents/superpowers/agent.yaml`:**
-```yaml
-version: 1
-agent:
-  name: "superpowers"
-  extend: default
-  system_prompt_path: ./system.md
-  system_prompt_args:
-    ROLE_ADDITIONAL: ""
-```
+# Copy workflow files to your project
+cp kimi-with-superpowers/workflow/UNIVERSAL_WORKFLOW.md your-project/workflow/
+cp kimi-with-superpowers/workflow/CONFIGURATION.md your-project/workflow/
 
-**Create `~/.kimi/agents/superpowers/system.md`:**
-
-Copy the content from Kimi's default system.md (located at `<kimi_cli_path>/agents/default/system.md`), then add this section after "## How to use skills":
-
-```markdown
-## Mandatory Superpowers Invocation
-
-**CRITICAL RULE:** At the start of EVERY conversation, before any response, action, or clarifying question, you MUST invoke the `using-superpowers` skill. In Kimi Code CLI, this means you MUST use the `ReadFile` tool to read the `SKILL.md` file of the `using-superpowers` skill (path listed under Available skills above).
-
-After reading `using-superpowers`, determine if any other skills apply to the current task. If there is even a 1% chance another skill might apply, you MUST read that skill's `SKILL.md` as well before proceeding.
-
-Do not skip this step. Do not respond to the user before reading `using-superpowers`.
-```
-
-**Also copy supporting files:**
-```bash
-# Find Kimi CLI installation path and copy supporting agent files
-KIMI_AGENTS_PATH="<path_to_kimi_cli>/agents/default"
-cp "$KIMI_AGENTS_PATH/coder.yaml" ~/.kimi/agents/superpowers/
-cp "$KIMI_AGENTS_PATH/explore.yaml" ~/.kimi/agents/superpowers/
-cp "$KIMI_AGENTS_PATH/plan.yaml" ~/.kimi/agents/superpowers/
-```
-
-### Step 6: Setup Shell Aliases (Optional but Recommended)
-
-To use the superpowers agent by default, add aliases to your shell.
-
-**Note:** With the `inject_prompt` hook configured (Step 4), the custom agent is optional. The hook will inject Superpowers reminders regardless of which agent you use.
-
-**Bash (~/.bashrc):**
-```bash
-alias kimi='kimi --agent-file "$HOME/.kimi/agents/superpowers/agent.yaml"'
-alias kimi-cli='kimi-cli --agent-file "$HOME/.kimi/agents/superpowers/agent.yaml"'
-```
-
-**Zsh (~/.zshrc):**
-```zsh
-alias kimi='kimi --agent-file "$HOME/.kimi/agents/superpowers/agent.yaml"'
-alias kimi-cli='kimi-cli --agent-file "$HOME/.kimi/agents/superpowers/agent.yaml"'
-```
-
-**Fish (~/.config/fish/config.fish):**
-```fish
-function kimi
-    command kimi --agent-file "$HOME/.kimi/agents/superpowers/agent.yaml" $argv
-end
-
-function kimi-cli
-    command kimi-cli --agent-file "$HOME/.kimi/agents/superpowers/agent.yaml" $argv
-end
-```
-
-**PowerShell ($PROFILE):**
-```powershell
-function kimi {
-    & "$env:USERPROFILE\kimi-cli\.venv\Scripts\kimi.exe" --agent-file "$env:USERPROFILE\.kimi\agents\superpowers\agent.yaml" @args
-}
-
-function kimi-cli {
-    & "$env:USERPROFILE\kimi-cli\.venv\Scripts\kimi.exe" --agent-file "$env:USERPROFILE\.kimi\agents\superpowers\agent.yaml" @args
-}
-
-# Optional: Simple alias without custom agent (hook will still inject Superpowers)
-function k {
-    & "$env:USERPROFILE\kimi-cli\.venv\Scripts\kimi.exe" @args
-}
+# Create your project config
+cp kimi-with-superpowers/workflow/CONFIGURATION.md your-project/PROJECT_CONFIG.yaml
+# Edit PROJECT_CONFIG.yaml with your stack details
 ```
 
 ---
@@ -350,37 +266,18 @@ function k {
    kimi
    ```
    
-   The AI should automatically read `using-superpowers/SKILL.md` before responding to your first message. You should see a tool call like:
-   ```
-   ReadFile(path="~/.kimi/skills/using-superpowers/SKILL.md")
-   ```
-
-4. **Test without custom agent:**
-   ```bash
-   # Even without --agent flag, the hook should still inject Superpowers
-   kimi
-   ```
+   The AI should automatically read `using-superpowers/SKILL.md` before responding.
 
 ---
 
-## Updating
+## For AI Assistants Using This Workflow
 
-### Update Superpowers
+When this skill is invoked, you are being asked to install Superpowers for Kimi. Follow the steps above for the user's platform.
 
-```bash
-cd ~/.kimi/superpowers
-git pull
-```
-
-Skills are linked via symlinks/junctions, so they update automatically.
-
-### Update Kimi CLI (feat/hook-inject-prompt branch)
-
-```bash
-cd <path-to-your-kimi-cli>
-git pull origin feat/hook-inject-prompt
-uv sync
-```
+After installation, guide the user to:
+1. Create PROJECT_CONFIG.yaml for their project (see CONFIGURATION.md)
+2. Read UNIVERSAL_WORKFLOW.md to understand the process
+3. Start using the workflow for their development tasks
 
 ---
 
@@ -399,23 +296,12 @@ uv sync
    rm -rf ~/.kimi/superpowers
    ```
 
-4. **Remove custom agent:**
-   ```bash
-   rm -rf ~/.kimi/agents/superpowers
-   ```
-
-5. **Remove prompt file:**
+4. **Remove prompt file:**
    ```bash
    rm -rf ~/.kimi/prompts
    ```
 
-6. **Remove shell aliases** from your profile files
-
-7. **(Optional) Remove Kimi CLI:**
-   ```bash
-   cd <path-to-your-kimi-cli>
-   uv pip uninstall kimi-cli
-   ```
+5. **Remove shell aliases** from your profile files
 
 ---
 
@@ -435,57 +321,6 @@ uv sync
 - Kimi looks for skills in `~/.kimi/skills/` by default
 - Make sure the directory exists and contains the skill links
 
-**Agent file not found:**
-- Use absolute paths in shell aliases
-- Verify the agent.yaml exists: `cat ~/.kimi/agents/superpowers/agent.yaml`
-
-**Hook not triggering:**
-- Verify config.toml syntax: `cat ~/.kimi/config.toml`
-- Check that the prompt file exists: `cat ~/.kimi/prompts/superpowers-reminder.md`
-- Try using an absolute path instead of `~` in the inject_prompt field
-
 ---
 
-## Platform-Specific Notes
-
-### Windows
-- Use junctions (`mklink /J`) instead of symlinks for better compatibility
-- PowerShell execution policy may need to be set: `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser`
-- The `~` in paths is automatically expanded to `%USERPROFILE%`
-
-### macOS
-- No special requirements
-
-### Linux
-- No special requirements
-
----
-
-## How It Works (Technical Details)
-
-The `feat/hook-inject-prompt` branch adds the `inject_prompt` field to the HookDef configuration. When a `UserPromptSubmit` hook has `inject_prompt` set:
-
-1. The hook engine reads the file content (or uses the literal string)
-2. The content is injected as `additional_context` in the HookResult
-3. KimiSoul receives this context and appends it as a system reminder message
-4. The LLM sees this reminder before processing the user's input
-5. The reminder instructs the LLM to read the Superpowers skill
-
-This approach is superior to the old method because:
-- ✅ Works with ANY agent (no need for `--agent superpowers`)
-- ✅ No need to patch Kimi's built-in system.md
-- ✅ Can be toggled on/off by editing config.toml
-- ✅ Multiple hooks can inject different contexts
-
----
-
-## Migration from Old Method
-
-If you previously installed Superpowers using the old method (patching system.md):
-
-1. Install the `feat/hook-inject-prompt` branch (Step 0)
-2. Follow Step 4 to configure the `inject_prompt` hook
-3. Remove the old "Mandatory Superpowers Invocation" section from:
-   - `~/.kimi/agents/superpowers/system.md` (if using custom agent)
-   - Kimi's built-in system.md (if you patched it)
-4. The hook-based method will now handle Superpowers invocation automatically
+*Skill Version: 1.1 | Updated for Universal Workflow*

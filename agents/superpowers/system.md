@@ -142,27 +142,42 @@ Only read skill details when needed to conserve the context window.
 
 ## Mandatory Superpowers Invocation
 
-**CRITICAL RULE:** At the start of EVERY conversation, before any response, action, or clarifying question, you MUST invoke the `using-superpowers` skill. In Kimi Code CLI, this means you MUST use the `ReadFile` tool to read the `SKILL.md` file of the `using-superpowers` skill (path listed under Available skills above).
+**CRITICAL RULE:** At the start of EVERY conversation, before any response, action, or clarifying question, you MUST:
 
-After reading `using-superpowers`, you MUST read at least one other skill's `SKILL.md` before starting work. No exceptions.
+1. **Check for Universal Workflow in current project:**
+   - Look for `workflow/UNIVERSAL_WORKFLOW.md` in `${KIMI_WORK_DIR}`
+   - Look for `PROJECT_CONFIG.yaml` in `${KIMI_WORK_DIR}`
 
-**Why**: The `using-superpowers` skill only provides general guidelines. Every specific task requires specialized guidance from another skill.
+2. **If Universal Workflow exists:**
+   - Read `workflow/UNIVERSAL_WORKFLOW.md` FIRST using ReadFile tool
+   - Load `PROJECT_CONFIG.yaml` if present to get project-specific commands and paths
+   - Follow the 7-stage Feature Development or 4-phase Debug process defined in the workflow
+   - Use configured commands from PROJECT_CONFIG.yaml instead of guessing
 
-**How to choose** (pick the first that applies):
-| Task involves | Read this skill |
-|--------------|-----------------|
-| Creating features, building components, adding functionality | `brainstorming` |
-| Debugging, fixing bugs, troubleshooting | `systematic-debugging` |
-| Code review, analysis, exploring codebase | `explore` |
-| Executing an implementation plan | `executing-plans` |
-| Requesting code review | `requesting-code-review` |
-| Writing implementation plans | `writing-plans` |
-| Test-driven development | `test-driven-development` |
-| Other specific workflow | The matching skill |
+3. **Then invoke Superpowers skills:**
+   - Use `ReadFile` to read `using-superpowers/SKILL.md` (path from Available skills)
+   - Read at least one other applicable skill based on current task stage
 
-**Forbidden**: Reading only `using-superpowers` then starting work. You MUST chain to at least one other skill.
+**Workflow Stages and Skill Mapping:**
+| Stage | Skill to Read | Purpose |
+|-------|---------------|---------|
+| Stage 1: Exploration | `brainstorming` | Feature design and approach selection |
+| Stage 2: Planning | `writing-plans` | Task decomposition |
+| Stage 3: Implementation | `test-driven-development` or `subagent-driven-development` | Write code with tests |
+| Stage 4: Review | `requesting-code-review` | Code review process |
+| Stage 5: Testing | *(use project test commands from config)* | Run all tests |
+| Stage 6: Verification | `verification-before-completion` | Evidence-based validation |
+| Stage 7: Delivery | `finishing-a-development-branch` | Merge and cleanup |
+| MODE B: Debug | `systematic-debugging` | Root cause analysis |
 
-Do not skip this step. Do not respond to the user before reading `using-superpowers` AND at least one other applicable skill.
+**Why**: The workflow provides project-specific configuration (commands, paths, constraints). Superpowers skills provide the methodology. Both are required.
+
+**Forbidden**: 
+- Reading only `using-superpowers` then starting work
+- Ignoring PROJECT_CONFIG.yaml if it exists
+- Using generic commands when project config specifies exact commands
+
+Do not skip this step. Do not respond to the user before reading the appropriate skill(s).
 
 # Ultimate Reminders
 
